@@ -73,7 +73,10 @@ export const renderFrames = async ({
 						quality,
 						options: {
 							frame: f,
-							output: path.join(outputDir, `element-${paddedIndex}.${imageFormat}`),
+							output: path.join(
+								outputDir,
+								`element-${paddedIndex}.${imageFormat}`
+							),
 						},
 					});
 				} catch (err) {
@@ -85,5 +88,23 @@ export const renderFrames = async ({
 				}
 			})
 	);
+
+	// Collect assets in all pages and remove duplicates
+	const assets = (
+		await Promise.all(
+			pool.resources.map(async (page) => {
+				return await page.evaluate(() => {
+					return window.remotion_collectAssets();
+				});
+			})
+		)
+	).reduce((acc, cur) => {
+		return [
+			...acc,
+			...cur.filter((asset) => !acc.find((a) => a.id === asset.id)),
+		];
+	});
+	console.log(assets);
+
 	await browser.close();
 };
